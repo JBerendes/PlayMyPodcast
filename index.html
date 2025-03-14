@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sylvie's Bedtime Stories</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
+  <!-- Boxicons CSS for icons -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6">
+  <div class="container mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Sylvie's Bedtime Stories</h1>
+        <button id="themeToggle" class="bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-1 rounded">
+            Toggle Theme
+          </button>
+    </div>
+    <!-- Header: Feed Meta Information -->
+    <header class="mb-6">
+        <div class="flex gap-8 justify-between">
+          <!-- Feed Image (if available) -->
+            <div class="flex flex-col items-center gap-4">
+                <div id="feedImageContainer" class="min-w-64"></div>
+                <!-- Audio Player -->
+                <audio id="audioPlayer" class="w-full mb-4" controls autoplay></audio>
+                <!-- Control Buttons -->
+                <div class="flex justify-center items-center space-x-6">
+                    <button id="prevButton" class="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    <i class="bx bx-skip-previous text-2xl"></i>
+                    </button>
+                    <button id="loopButton" class="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                        <i class="bx bx-repeat text-2xl"></i>
+                    </button>
+                    <button id="nextButton" class="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    <i class="bx bx-skip-next text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+          
+          <div>
+            <h1 id="feedTitle" class="text-3xl font-bold"></h1>
+            <p id="feedDesc" class="mt-1"></p>
+            <div id="feedMeta" class="mt-2 text-sm">
+              <span id="feedAuthor"></span>
+              <span id="feedCopyright" class="ml-2"></span>
+            </div>
+            <div id="feedLinkContainer" class="mt-2">
+              <a id="feedLink" href="#" target="_blank" class="text-blue-500 underline"></a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+    
+    
+
+    
+
+    
+
+    <!-- Playlist -->
+    <div id="playlist" class="bg-white dark:bg-gray-800 rounded shadow p-4">
+      <h2 class="text-xl font-semibold mb-2">Playlist</h2>
+      <ul id="trackList" class="space-y-2"></ul>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle functionality
+    document.getElementById('themeToggle').addEventListener('click', function() {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    let loopEnabled = true; // Loop is toggled on by default
+    let currentTrack = 0;
+    let playlist = [];
+
+    async function fetchData() {
+      try {
+        const response = await fetch('/api/little-stories');
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        return null;
+      }
+    }
+
+    async function initPlayer() {
+      const data = await fetchData();
+      if (!data) return;
+      
+      // Display feed meta information
+      const meta = data.meta;
+      document.getElementById('feedTitle').textContent = meta.title;
+      document.getElementById('feedDesc').textContent = meta.description;
+      document.getElementById('feedAuthor').textContent = meta['itunes:author'] || meta['itunesOwner']?.['itunes:name'] || "";
+      document.getElementById('feedCopyright').textContent = meta.copyright || "";
+      const feedLink = document.getElementById('feedLink');
+      feedLink.textContent = meta.link;
+      feedLink.href = meta.link;
+      
+      if (meta.itunesImage) {
+        document.getElementById('feedImageContainer').innerHTML = `<img src="${meta.itunesImage}" alt="Feed Image" class="w-full max-w-md mx-auto rounded shadow">`;
+      }
+
+      // Set up playlist
+      playlist = data.playlist;
+      if (playlist.length === 0) {
+        document.getElementById('trackList').innerHTML = "<li>No episodes available</li>";
+        return;
+      }
+      const audioPlayer = document.getElementById('audioPlayer');
+      const trackList = document.getElementById('trackList');
+
+      // Populate the playlist UI
+      playlist.forEach((track, index) => {
+        const li = document.createElement('li');
+        li.textContent = track.title;
+        li.className = "cursor-pointer p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded";
+        li.onclick = () => {
+          currentTrack = index;
+          loadTrack(currentTrack);
+        };
+        trackList.appendChild(li);
+      });
+
+      function highlightTrack(index) {
+        const items = trackList.getElementsByTagName('li');
+        for (let i = 0; i < items.length; i++) {
+          if (i === index) {
+            items[i].classList.add("bg-gray-300", "dark:bg-gray-600");
+          } else {
+            items[i].classList.remove("bg-gray-300", "dark:bg-gray-600");
+          }
+        }
+      }
+
+      function loadTrack(index) {
+        if (index >= playlist.length || index < 0) return;
+        audioPlayer.src = playlist[index].url;
+        highlightTrack(index);
+        audioPlayer.play();
+      }
+
+      // Previous button functionality
+      document.getElementById('prevButton').addEventListener('click', () => {
+        if (currentTrack > 0) {
+          currentTrack--;
+        } else if (loopEnabled) {
+          currentTrack = playlist.length - 1;
+        }
+        loadTrack(currentTrack);
+      });
+
+      // Next button functionality
+      document.getElementById('nextButton').addEventListener('click', () => {
+        if (currentTrack < playlist.length - 1) {
+          currentTrack++;
+        } else if (loopEnabled) {
+          currentTrack = 0;
+        }
+        loadTrack(currentTrack);
+      });
+
+      // Loop toggle button functionality
+      document.getElementById('loopButton').addEventListener('click', () => {
+        loopEnabled = !loopEnabled;
+        const loopButton = document.getElementById('loopButton');
+        // set the class on the button based on the loopEnabled state
+        loopButton.classList.toggle('bg-green-500', loopEnabled);
+        loopButton.classList.toggle('bg-gray-500', !loopEnabled);
+      });
+
+      // Auto-advance when a track ends
+      audioPlayer.addEventListener('ended', () => {
+        if (currentTrack < playlist.length - 1) {
+          currentTrack++;
+          loadTrack(currentTrack);
+        } else if (loopEnabled) {
+          currentTrack = 0;
+          loadTrack(currentTrack);
+        }
+      });
+
+      // Load the first track
+      loadTrack(currentTrack);
+    }
+
+    // Initialize the media player on page load
+    initPlayer();
+  </script>
+</body>
+</html>
