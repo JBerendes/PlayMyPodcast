@@ -1,6 +1,6 @@
 {
   "name": "playmypodcast",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PlayMyPodcast is a lightweight, serverless app that transforms your podcast RSS feed into a seamless, voice-controlled listening experience on Google Home. It fetches and parses your podcast feed, creating a playable playlist with support for standard media commands like play, pause, and skip.",
   "repository": {
     "type": "git",
