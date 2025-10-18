@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
       const playlist = items.map(item => {
         const enclosure = item.enclosure;
         const url = enclosure && enclosure.$ && enclosure.$.url ? enclosure.$.url : '';
-        const title = item.title || 'Podcast Episode';
+        const title = emojisForText(item.title)+ ' ' + item.title || 'Podcast Episode';
         const description = item.description || 'Podcast Episode';
         return { title, url, description };
       });
@@ -84,3 +84,43 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+// a helper function that checks for words that could be emojis
+function containsEmojiWords(text) {
+  const emojiWords = [
+    'smile', 'heart', 'star', 'fire', 'thumbs up', 'clap', 'laugh', 'cry', 'angry', 'surprised',
+    'fox', 'rabbit', 'bear', 'mouse', 'cake', 'sleep', 'train', 'superhero', 'robot', 'moon', 'school',
+    'halloween', 'garden', 'tree', 'friend', 'baby', 'pizza', 'cookie', 'bus', 'rocket', 'bee', 'cat',
+    'dog', 'owl', 'frog', 'hedgehog', 'squirrel', 'fish', 'turtle', 'star', 'camp', 'picnic', 'balloon',
+    'apology', 'birthday', 'circus', 'snow', 'soup', 'jam', 'review', 'family', 'adventure', 'sleep', 'nap',
+    'field', 'woods', 'forest', 'house', 'artist', 'mistake', 'garden', 'seed', 'elf', 'valentine', 'friendship', 'school',
+    'pet', 'apple', 'painting', 'recipe', 'wait', 'spelling', 'bee', 'city', 'country', 'bow', 'career', 'picnic',
+    'apothecary', 'raft', 'pie', 'jam', 'restaurant', 'dormouse'
+  ];
+  const lowerText = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  return emojiWords.some(word => lowerText.includes(word));
+}
+
+module.exports.containsEmojiWords = containsEmojiWords;
+
+function emojisForText(text) {
+  const emojiMap = {
+    smile: '😊', heart: '❤️', star: '⭐', fire: '🔥', sea: '🌊', book: '📚', tunnel: '🚇', bird: '🐦', caterpillar: '🐛', salamander: '🦎', beetle: '🐞', 'roly poly': '🐞',  'thumbs up': '👍', clap: '👏', laugh: '😂', cry: '😢', angry: '😠', surprised: '😲', music: '🎵',
+    fox: '🦊', rabbit: '🐰', bear: '🐻', mouse: '🐭', cake: '🍰', sleep: '😴', train: '🚂', superhero: '🦸', robot: '🤖', moon: '🌙', school: '🏫', night: '🌙', winter: '❄️', summer: '🌞', 'new year': '🎉',
+    halloween: '🎃', garden: '🌻', tree: '🌳', friend: '🤝', baby: '👶', pizza: '🍕', cookie: '🍪', bus: '🚌', rocket: '🚀', bee: '🐝', strange: '🌀', swing: '🏖️', voice: '🗣️', bake: '🧁',
+    railroad: '🚆', vase: '🏺', van: '🚐', cat: '🐱', dog: '🐶', owl: '🦉', frog: '🐸', hedgehog: '🦔', squirrel: '🐿️', fish: '🐟', turtle: '🐢', camp: '🏕️', picnic: '🧺', balloon: '🎈',
+    apology: '🙏', birthday: '🎂', circus: '🎪', snow: '❄️', soup: '🍲', jam: '🍓', review: '📝', family: '👨‍👩‍👧‍👦', adventure: '🗺️', nap: '🛏️', toothbrush: '🪥', snake: '🐍',
+    field: '🌾', woods: '🌳🌲', forest: '🌳🌲', house: '🏠', artist: '🎨', mistake: '😬', seed: '🌱', elf: '🧝', valentine: '💌', friendship: '🤗', pet: '🐾',
+    apple: '🍎', painting: '🖌️', recipe: '📖', wait: '⏳', spelling: '🔤', city: '🏙️', country: '🌄', bow: '🎀', career: '💼', apothecary: '⚗️',
+    raft: '🛶', pie: '🥧', treasure: '💰', plane: '✈️', restaurant: '🍽️', bridge: '🌉', fence: '🪵', pig: '🐷', parrot: '🦜', sick: '🤒', donkey: '🐴', zebra: '🦓', clover: '☘️', poem: '📜', rhyming: '🔔',
+    ruby: '💎♦️', dormouse: '🐭', fairy: '🧚', fairies: '🧚', sock: '🧦', sofa: '🛋️', badger: '🦡', mountain: '⛰️', tooth: '🦷', teeth: '🦷', hamster: '🐹', door: '🚪', gnome: '🧙🏻‍♂️🍄'
+  };
+  const lowerText = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  const found = new Set();
+  Object.keys(emojiMap).forEach(word => {
+    if (lowerText.includes(word)) {
+      found.add(emojiMap[word]);
+    }
+  });
+  return Array.from(found).join(' ');
+}
