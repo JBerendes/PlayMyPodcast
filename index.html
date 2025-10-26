@@ -237,13 +237,13 @@
 
       // Auto-advance when a track ends
       audioPlayer.addEventListener('ended', () => {
+        if (isQuietHours()) return;
         if (currentTrack < playlist.length - 1) {
           currentTrack++;
-          loadTrack(currentTrack);
         } else if (loopEnabled) {
           currentTrack = 0;
-          loadTrack(currentTrack);
         }
+        loadTrack(currentTrack);
       });
 
       // Load the first track
@@ -275,6 +275,17 @@
       } else {
         bufferBar.style.width = '0%';
       }
+    }
+
+    // isQuietHours checks if current time is between 7:15 AM and 8:00 AM
+    function isQuietHours() {
+      const now = new Date();
+      if ((now.getHours() === 7 || now.getHours() === 10) && now.getMinutes() >= 15) {
+        audio.pause();
+        loopEnabled = false;
+        updatePlayPauseIcon();
+      }
+      return ((now.getHours() === 7 || now.getHours() === 10) && now.getMinutes() >= 15);
     }
 
     function updateProgressBar() {
